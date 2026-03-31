@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Crowd Monitoring Dashboard</title>
+    <!-- Modern font from Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #6366f1;
+            --safe: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-main);
+            font-weight: 800;
+            margin-bottom: 30px;
+            text-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+            letter-spacing: -0.5px;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .video-container {
+            flex: 1 1 60%;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .video-container img {
+            width: 100%;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        .dashboard {
+            flex: 1 1 35%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin: 10px 0 0 0;
+            background: linear-gradient(135deg, #a5b4fc, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .zone-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .zone-card {
+            background: #27354f;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 6px solid var(--accent);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        /* Status Colors */
+        .safe { border-left-color: var(--safe); }
+        .warning { border-left-color: var(--warning); box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); }
+        .danger { 
+            border-left-color: var(--danger); 
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+            animation: pulse-danger 2s infinite; 
+        }
+
+        @keyframes pulse-danger {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .zone-name {
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--text-main);
+            text-align: left;
+        }
+        
+        .zone-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .zone-info {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+
+        .zone-info .val {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .alert-badge {
+            margin-top: 8px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+
+        .bg-safe { background: rgba(34, 197, 94, 0.2); color: var(--safe); }
+        .bg-warning { background: rgba(234, 179, 8, 0.2); color: var(--warning); }
+        .bg-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .container { flex-direction: column; }
+            .video-container, .dashboard { flex: 1 1 100%; }
+        }
+    </style>
+</head>
+<body>
+    <h1>AI Crowd Monitoring Hub</h1>
+    <div class="container">
+        <div class="video-container">
+            <img src="{{ url_for('video_feed') }}" alt="Live Feed Processing..." id="video-stream">
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <h3>Current Active People</h3>
+                <div class="metric" id="total-count">0</div>
+            </div>
+            
+            <div class="zone-grid">
+                <!-- Zone A -->
+                <div class="zone-card" id="card-Zone-A">
+                    <div>
+                        <div class="zone-name">Zone A</div>
+                        <div class="zone-stats">
+                            <div>Current: <span class="val" id="count-Zone-A">0</span></div>
+                            <div>Total Entries: <span class="val" id="cum-Zone-A">0</span></div>
+                        </div>
+                    </div>
+                    <div class="zone-info">
+                        <div>Density: <span class="val" id="density-Zone-A">0.00</span></div>
+                        <div class="alert-badge bg-safe" id="alert-Zone-A">SAFE</div>
+                    </div>
+                </div>
+                
+                <!-- Zone B -->
+                <div class="zone-card" id="card-Zone-B">
+                    <div>
+                        <div class="zone-name">Zone B</div>
+                        <div class="zone-stats">
+                            <div>Current: <span class="val" id="count-Zone-B">0</span></div>
+                            <div>Total Entries: <span class="val" id="cum-Zone-B">0</span></div>
+                        </div>
+                    </div>
+                    <div class="zone-info">
+                        <div>Density: <span class="val" id="density-Zone-B">0.00</span></div>
+                        <div class="alert-badge bg-safe" id="alert-Zone-B">SAFE</div>
+                    </div>
+                </div>
+                
+                <!-- Zone C -->
+                <div class="zone-card" id="card-Zone-C">
+                    <div>
+                        <div class="zone-name">Zone C</div>
+                        <div class="zone-stats">
+                            <div>Current: <span class="val" id="count-Zone-C">0</span></div>
+                            <div>Total Entries: <span class="val" id="cum-Zone-C">0</span></div>
+                        </div>
+                    </div>
+                    <div class="zone-info">
+                        <div>Density: <span class="val" id="density-Zone-C">0.00</span></div>
+                        <div class="alert-badge bg-safe" id="alert-Zone-C">SAFE</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDashboard() {
+            fetch('/metrics')
+                .then(response => response.json())
+                .then(data => {
+                    // Animate number change if different
+                    const totalEl = document.getElementById('total-count');
+                    if(totalEl.textContent !== data.total_count.toString()) {
+                        totalEl.textContent = data.total_count;
+                        totalEl.style.transform = "scale(1.1)";
+                        setTimeout(() => totalEl.style.transform = "scale(1)", 200);
+                    }
+                    
+                    ['Zone A', 'Zone B', 'Zone C'].forEach(zone => {
+                        const idSuffix = zone.replace(' ', '-');
+                        
+                        document.getElementById('count-' + idSuffix).textContent = data.zone_counts[zone];
+                        document.getElementById('cum-' + idSuffix).textContent = data.cumulative[zone];
+                        document.getElementById('density-' + idSuffix).textContent = parseFloat(data.zone_densities[zone]).toFixed(2);
+                        
+                        const alertStatus = data.alerts[zone];
+                        const alertBadge = document.getElementById('alert-' + idSuffix);
+                        const cardEl = document.getElementById('card-' + idSuffix);
+                        
+                        alertBadge.textContent = alertStatus;
+                        
+                        if (alertStatus === 'DANGER') {
+                            alertBadge.className = 'alert-badge bg-danger';
+                            cardEl.className = 'zone-card danger';
+                        } else if (alertStatus === 'WARNING') {
+                            alertBadge.className = 'alert-badge bg-warning';
+                            cardEl.className = 'zone-card warning';
+                        } else {
+                            alertBadge.className = 'alert-badge bg-safe';
+                            cardEl.className = 'zone-card safe';
+                        }
+                    });
+                })
+                .catch(err => console.error('Error fetching metrics:', err));
+        }
+
+        // Add smooth resizing behavior for metric counters
+        document.getElementById('total-count').style.transition = "transform 0.2s ease-out";
+
+        // Update every 500ms
+        setInterval(updateDashboard, 500);
+    </script>
+</body>
+</html>
